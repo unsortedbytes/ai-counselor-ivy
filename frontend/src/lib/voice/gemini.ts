@@ -11,6 +11,8 @@ import { getMic, type VoiceClient, type VoiceCredentials, type VoiceEvent } from
 
 const IN_RATE = 16000;
 const OUT_RATE = 24000;
+// How long Ivy may stay quiet after a tool-only turn before we prompt her to continue.
+const NUDGE_AFTER_MS = 4000;
 
 // Float32 → Int16 in ~100 ms chunks, off the main thread.
 const WORKLET = `
@@ -89,6 +91,10 @@ export class GeminiLiveClient implements VoiceClient {
   private user: { id: string; text: string } | null = null;
   private bot: { id: string; text: string; audio: boolean } | null = null;
   private turnDone = false;
+  // Whether Ivy had already spoken in the turn that called a tool, and the
+  // timer that nudges her if she goes quiet after a tool-only turn.
+  private spokeBeforeTool = false;
+  private nudgeTimer: ReturnType<typeof setTimeout> | undefined;
 
   constructor(private emit: (e: VoiceEvent) => void) {}
 
@@ -201,6 +207,7 @@ export class GeminiLiveClient implements VoiceClient {
     }
     if (msg.error) this.emit({ type: "error", message: msg.error.message ?? "Gemini error" });
 
+    if (msg.toolCall) this.spokeBeforeTool = !!this.bot?.audio;
     for (const fc of msg.toolCall?.functionCalls ?? []) {
       this.emit({ type: "tool_call", id: fc.id, name: fc.name, args: fc.args ?? {} });
     }
@@ -251,6 +258,7 @@ export class GeminiLiveClient implements VoiceClient {
   }
 
   private ensureBot() {
+    clearTimeout(this.nudgeTimer);
     if (!this.bot) {
       this.bot = { id: `b${++this.turnCounter}`, text: "", audio: false };
       this.turnDone = false;
@@ -313,8 +321,18 @@ export class GeminiLiveClient implements VoiceClient {
   }
 
   sendToolResult(id: string, name: string, result: Record<string, unknown>) {
-    // SILENT: Ivy absorbs the result without interrupting what she's saying.
-    this.send({ toolResponse: { functionResponses: [{ id, name, response: { ...result, scheduling: "SILENT" } }] } });
+    // Our tools are blocking, so Gemini continues on its own once it has the result.
+    // (`scheduling` is only for NON_BLOCKING tools; SILENT here left Ivy mute after a tool call.)
+    this.send({ toolResponse: { functionResponses: [{ id, name, response: result }] } });
+    if (this.spokeBeforeTool) return;
+    // A tool-only turn should be followed by speech; if it isn't, nudge her to carry on.
+    clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = setTimeout(() => {
+      if (this.bot || this.playing.size) return;
+      this.send({
+        clientContent: { turns: [{ role: "user", parts: [{ text: "(Continue.)" }] }], turnComplete: true },
+      });
+    }, NUDGE_AFTER_MS);
   }
 
   sendText(text: string) {
@@ -331,6 +349,7 @@ export class GeminiLiveClient implements VoiceClient {
 
   disconnect() {
     this.closedByUs = true;
+    clearTimeout(this.nudgeTimer);
     this.stopPlayback();
     this.ws?.close();
     this.mic?.getTracks().forEach((t) => t.stop());
