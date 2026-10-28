@@ -1,0 +1,36 @@
+# Render Blueprint: Dashboard → New → Blueprint → pick this repo.
+# The frontend is deployed separately on Vercel (root directory: frontend).
+services:
+  - type: web
+    name: ivy-backend
+    runtime: docker
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore          # closest Render region to India
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: WEB_CONCURRENCY
+        value: "1"              # free instances have 512 MB RAM
+      - key: MONGODB_DB
+        value: ivy
+      # Fill these in on the Render dashboard (never commit them):
+      - key: MONGODB_URI
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DJANGO_ALLOWED_HOSTS
+        sync: false             # e.g. ivy-backend.onrender.com
+      - key: DJANGO_CSRF_TRUSTED_ORIGINS
+        sync: false             # e.g. https://your-app.vercel.app
+      - key: FRONTEND_URL
+        sync: false             # e.g. https://your-app.vercel.app
+      - key: GOOGLE_CLIENT_ID
+        sync: false

@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  /* helloivy brand blue (buttons, links, student avatar) */
+  --color-ivy-50: #eef3ff;
+  --color-ivy-200: #c9d8ff;
+  --color-ivy-300: #9db8ff;
+  --color-ivy-500: #3d74ff;
+  --color-ivy-600: #2f62f0;
+  --color-ivy-700: #2350cc;
+  --color-teal-brand: #19c6c3;
+  --color-navy-900: #111a33;
+  --color-lilac-50: #f1f3fc;
+  --color-lilac-100: #e6e9f8;
+  --color-cream-100: #fbf6ec;
+  --font-sans: var(--font-lexend);
+  --font-serif: var(--font-lexend);
+}
+
+body {
+  background: #ffffff;
+  color: #111a33;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-ivy-600 to-teal-brand px-5 py-2.5 font-medium text-white shadow-sm transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-2.5 font-medium text-navy-900 shadow-sm ring-1 ring-slate-300 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .field {
+    @apply mt-1 block w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-ivy-500 focus:ring-2 focus:ring-ivy-200;
+  }
+  .label {
+    @apply text-sm font-medium text-slate-700;
+  }
+  /* A card with a soft multi-colour border, as in the Information Capture panel. */
+  .gradient-card {
+    border: 1.5px solid transparent;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(120deg, #c86bff, #5b7cff 35%, #23c6e0 70%, #3be0b0) border-box;
+  }
+  /* The warmer border used by the Instructions card. */
+  .gradient-card-warm {
+    border: 1.5px solid transparent;
+    background:
+      linear-gradient(#fff, #fff) padding-box,
+      linear-gradient(120deg, #ffc2b3, #ffd9c7 40%, #f6c7e8) border-box;
+  }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.animate-in { animation: pop-in 0.35s ease-out; }
+
+@keyframes flash {
+  from { background-color: #e7fbf7; }
+  to { background-color: transparent; }
+}
+.animate-flash { animation: flash 1.6s ease-out; }
+
+@media print {
+  body { background: white; }
+}
