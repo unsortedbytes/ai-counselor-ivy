@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth";
 import type { EssayPrompt } from "@/lib/types";
 
 const CUSTOM = "custom";
+// The prompt from the assignment brief (350 words), preselected for the demo.
+const DEMO_PROMPT = "life-experience-personal-story";
 
 export function StartForm() {
   const router = useRouter();
@@ -33,7 +35,8 @@ export function StartForm() {
       .prompts()
       .then((ps) => {
         setPrompts(ps);
-        setForm((f) => (f.prompt ? f : { ...f, prompt: ps[0]?.slug ?? CUSTOM }));
+        const demo = ps.find((p) => p.slug === DEMO_PROMPT) ?? ps[0];
+        setForm((f) => (f.prompt ? f : { ...f, prompt: demo?.slug ?? CUSTOM }));
       })
       .catch(() => setForm((f) => ({ ...f, prompt: CUSTOM })));
   }, [user]);
