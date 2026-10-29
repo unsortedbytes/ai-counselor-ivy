@@ -17,8 +17,11 @@ export function CaptureRoom({ session, onFinalized }: { session: Session; onFina
   const [answers, setAnswers] = useState<Answer[]>(session.answers ?? []);
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
-  const current = useRef(session.current_question ?? 0);
+  // The question Ivy is on: 1 until an answer is saved, then the one after it.
+  const current = useRef(session.current_question || 1);
   const summary = useRef("");
+  // How many student turns had been heard at the last saved answer.
+  const heardAtSave = useRef(0);
 
   const saveAnswer = useCallback(
     (number: number, text: string) => {
@@ -49,15 +52,21 @@ export function CaptureRoom({ session, onFinalized }: { session: Session; onFina
     currentQuestion: () => current.current,
     onTool: (name, args) => {
       const n = Number(args.number);
-      if (name === "set_question") {
-        if (!(n >= 1 && n <= questions.length)) return { error: `question must be 1–${questions.length}` };
-        current.current = n;
-        voice.track(api.setQuestion(session.id, n));
-        return { result: "ok" };
-      }
       if (name === "save_answer") {
         if (!(n >= 1 && n <= questions.length)) return { error: `question must be 1–${questions.length}` };
+        // The model sometimes "answers" a question itself and races on to the next one.
+        // Only accept a save once the student has said something since the last one.
+        const heard = voice.turns.filter((t) => t.role === "user" && t.text).length;
+        if (heard <= heardAtSave.current) {
+          return { error: `The student hasn't answered yet. Ask question ${n} and wait for their reply before saving.` };
+        }
+        heardAtSave.current = heard;
         voice.track(saveAnswer(n, String(args.answer ?? "")));
+        const next = Math.min(n + 1, questions.length);
+        if (next > current.current) {
+          current.current = next;
+          voice.track(api.setQuestion(session.id, next));
+        }
         return { result: "saved" };
       }
       if (name === "end_capture") {

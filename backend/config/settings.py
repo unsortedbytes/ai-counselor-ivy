@@ -169,10 +169,10 @@ GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_LIVE_MODEL = os.environ.get("GEMINI_LIVE_MODEL", "gemini-3.8-live")
 GEMINI_VOICE = os.environ.get("GEMINI_VOICE", "Aoede")
 # Pro models have no free-tier quota; Flash is plenty for this task.
-GEMINI_STRATEGY_MODEL = os.environ.get("GEMINI_STRATEGY_MODEL", "gemini-3.8-flash")
+GEMINI_STRATEGY_MODEL = os.environ.get("GEMINI_STRATEGY_MODEL", "gemini-3.5-flash")
 GEMINI_THINKING_LEVEL = os.environ.get("GEMINI_THINKING_LEVEL", "")  # minimal/low/medium/high; "" = model default
 # Tried in order when the main model is overloaded (503) or rate-limited (429).
-GEMINI_FALLBACK_MODELS = [m for m in os.environ.get("GEMINI_FALLBACK_MODELS", "gemini-3.5-flash").split(",") if m]
+GEMINI_FALLBACK_MODELS = [m for m in os.environ.get("GEMINI_FALLBACK_MODELS", "gemini-3.8-flash").split(",") if m]
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 OPENAI_BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")

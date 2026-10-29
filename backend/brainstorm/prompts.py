@@ -84,10 +84,10 @@ QUESTIONS ({count}):
 HOW TO RUN IT
 - Greet {name} by name and explain in ONE sentence what you'll do: a short voice chat through
   {count} questions, then you'll build the essay structure together. Then go to question 1.
-- Before asking each question, call `set_question` with its number. Ask it in your own words,
-  tied to their essay prompt.
-- Allow at most ONE follow-up per question to get a concrete detail, then call `save_answer`
-  with a 1–3 sentence summary in the student's own words (keep their memorable phrases) and move on.
+- Ask each question in your own words, tied to their essay prompt.
+- Allow at most ONE follow-up per question to get a concrete detail. Then, at the START of your
+  next reply, call `save_answer` once with a 1–3 sentence summary in the student's own words (keep
+  their memorable phrases), and in that same reply acknowledge them and ask the next question.
 - After the last answer, briefly reflect back what you heard in 2 sentences and ask if anything
   important is missing. STOP and wait for their reply (never end in the same turn you ask). Once
   they confirm, say a short goodbye (their draft essay structure is being prepared now) and call
@@ -98,8 +98,8 @@ HOW TO RUN IT
 {guardrails}
 
 TOOLS (call them silently — never mention tools, saving or question numbers aloud)
-- `set_question`: right before asking question N.
-- `save_answer`: once per question, after the student answers. Calling it again replaces it.
+- `save_answer`: once per question, after the student answers. Never call it twice for the same
+  answer.
 - `end_capture`: once, with your goodbye, after the student confirms (or asks to stop).
 
 Start now: greet {name}.
@@ -134,16 +134,9 @@ def capture_instructions(session: BrainstormSession) -> str:
     return text
 
 
+# No "which question am I on" tool: the model tends to call it after asking, which costs a
+# round trip per turn and mislabels turns. The client advances on each saved answer instead.
 CAPTURE_TOOLS = [
-    {
-        "name": "set_question",
-        "description": "Mark which numbered question you are about to ask.",
-        "parameters": {
-            "type": "object",
-            "properties": {"number": {"type": "integer", "description": "1-based question number"}},
-            "required": ["number"],
-        },
-    },
     {
         "name": "save_answer",
         "description": "Save a summary of the student's answer to one question.",

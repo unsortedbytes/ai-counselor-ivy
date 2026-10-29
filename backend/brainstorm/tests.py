@@ -347,7 +347,7 @@ class PromptTests(TestCase):
         self.assertIn("SCOPE & SAFETY", text)
         self.assertIn("5. Looking ahead", text)
         self.assertIn("At Bryn Mawr?", text)
-        self.assertEqual([t["name"] for t in tools], ["set_question", "save_answer", "end_capture"])
+        self.assertEqual([t["name"] for t in tools], ["save_answer", "end_capture"])
 
         EssayStructure.objects.create(session=s, model_name="mock", data=mock_structure(s))
         s.status = BrainstormSession.Status.STRUCTURING
